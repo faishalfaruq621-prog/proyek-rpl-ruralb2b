@@ -1,0 +1,112 @@
+# ============================================================
+# RuralB2B — Root .gitignore
+# Berlaku untuk seluruh monorepo (backend + frontend)
+# ============================================================
+
+# ----------------------------------------------------------
+# KEAMANAN: Jangan pernah commit file berikut
+# ----------------------------------------------------------
+.env
+.env.*
+*.env
+!.env.example
+!**/.env.example
+
+# Token / credential / API keys
+buyer_token.txt
+seller_token.txt
+*_token.txt
+*.key
+*.pem
+*.pfx
+*.p12
+credentials.json
+secrets.json
+
+# ----------------------------------------------------------
+# PYTHON (backend)
+# ----------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+*.egg
+pip-wheel-metadata/
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# ----------------------------------------------------------
+# NODE / FRONTEND
+# ----------------------------------------------------------
+node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.cache/
+.parcel-cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm
+
+# ----------------------------------------------------------
+# STORAGE PRIVAT (dokumen verifikasi, bukti bayar, gambar)
+# ----------------------------------------------------------
+backend/storage/
+storage/
+
+# ----------------------------------------------------------
+# DATABASE LOKAL, BACKUP & DUMP
+# ----------------------------------------------------------
+backups/
+*.sql
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+
+# ----------------------------------------------------------
+# LOG & FILE SEMENTARA
+# ----------------------------------------------------------
+*.log
+flask_stderr.log
+flask_stdout.log
+logs/
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# ----------------------------------------------------------
+# ARSIP
+# ----------------------------------------------------------
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# ----------------------------------------------------------
+# OS & EDITOR
+# ----------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.code-workspace
+*.suo
+*.user

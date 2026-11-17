@@ -1,0 +1,153 @@
+{
+  "info": {
+    "name": "RuralB2B Auth API",
+    "description": "Koleksi pengujian endpoint autentikasi RuralB2B. Jalankan Register dengan email baru, lalu Login agar access_token tersimpan otomatis.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:5000"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"full_name\": \"Budi Santoso\",\n  \"email\": \"budi.umkm@example.com\",\n  \"password\": \"RuralB2B!2026\",\n  \"phone\": \"+62 812-3456-7890\",\n  \"business_type\": \"farmer\",\n  \"business_name\": \"Tani Makmur\",\n  \"address\": \"Jl. Raya Desa No. 1\",\n  \"village\": \"Sukamaju\",\n  \"district\": \"Cibiru\",\n  \"city\": \"Bandung\",\n  \"province\": \"Jawa Barat\",\n  \"postal_code\": \"40615\",\n  \"description\": \"Petani sayuran\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/register",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (body && body.data && body.data.access_token) {",
+              "    pm.collectionVariables.set('access_token', body.data.access_token);",
+              "    console.log('access_token berhasil disimpan ke collection variable');",
+              "} else {",
+              "    console.warn('access_token tidak ditemukan pada response');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"budi.umkm@example.com\",\n  \"password\": \"RuralB2B!2026\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Me",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/me",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/auth/logout",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "logout"
+          ]
+        }
+      }
+    }
+  ]
+}

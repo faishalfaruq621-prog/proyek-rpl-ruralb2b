@@ -1,0 +1,858 @@
+{
+  "info": {
+    "name": "RuralB2B Cart-Order API (Stage 6)",
+    "_postman_id": "ruralb2b-cart-order-stage-6",
+    "description": "Koleksi Postman untuk fitur Tahap 6: Cart, Checkout, Pesanan (Pembeli & Penjual), Pembayaran, dan Bukti Pembayaran. Semua endpoint sesuai implementasi aktual di backend/routes/cart.py, backend/routes/orders.py, backend/services/cart_service.py, backend/services/order_service.py, backend/services/payment_service.py, dan backend/services/payment_proof_storage_service.py.\n\nPrasyarat sebelum menjalankan:\n1. Jalankan backend Flask (python app.py) dan pastikan /api/health mengembalikan 200.\n2. Dapatkan token pembeli dan penjual melalui login (koleksi Auth Stage 1-5) atau register terlebih dahulu.\n3. Simpan access_token ke collection variable buyer_token dan seller_token.\n4. Beberapa request memerlukan order_id dan cart_item_id yang didapat dari response request sebelumnya.\n5. Jangan mengubah atau menghapus data pengujian lama.\n\nCatatan: ID dan data pengujian tidak diasumsikan sudah tersedia. Setiap request yang memerlukan order_id atau cart_item_id menandanya dalam deskripsi dan test script.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "GET /api/cart - Lihat keranjang",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cart",
+              "host": ["{{base_url}}"],
+              "path": ["cart"]
+            },
+            "description": "Mengembalikan keranjang belanja aktif pembeli yang login.\nPrasyarat: buyer_token sudah diisi."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "POST /api/cart/items - Tambah item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/items",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items"]
+            },
+            "description": "Menambahkan produk ke keranjang aktif.\nPrasyarat: buyer_token sudah diisi. Ganti product_id dengan ID produk yang valid.\nProduk milik profil pembeli sendiri akan ditolak (self_purchase_not_allowed)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "pm.test(\"Saves cart_item_id if created\", function () {",
+                  "  var json = pm.response.json();",
+                  "  if (json.data && json.data.cart && json.data.cart.items && json.data.cart.items.length > 0) {",
+                  "    var lastItem = json.data.cart.items[json.data.cart.items.length - 1];",
+                  "    if (lastItem && lastItem.id) {",
+                  "      pm.collectionVariables.set(\"cart_item_id\", lastItem.id);",
+                  "    }",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "PATCH /api/cart/items/{item_id} - Ubah jumlah",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/items/{{cart_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items", "{{cart_item_id}}"]
+            },
+            "description": "Mengubah jumlah item keranjang tertentu.\nPrasyarat: buyer_token dan cart_item_id sudah diisi (didapat dari response POST /cart/items atau GET /cart).\nProduk milik profil pembeli sendiri akan ditolak (self_purchase_not_allowed)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "DELETE /api/cart/items/{item_id} - Hapus item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cart/items/{{cart_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "items", "{{cart_item_id}}"]
+            },
+            "description": "Menghapus item keranjang tertentu.\nPrasyarat: buyer_token dan cart_item_id sudah diisi."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Checkout",
+      "item": [
+        {
+          "name": "POST /api/orders/checkout - Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shipping_address\": \"Jl. Contoh No. 1\",\n  \"buyer_note\": \"Tolong dikirim pagi hari\",\n  \"payment_method\": \"transfer\",\n  \"payment_reference\": \"TRX-20261109-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/checkout",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "checkout"]
+            },
+            "description": "Melakukan checkout keranjang aktif. Setiap group produk per penjual dibuat menjadi satu order terpisah.\nPrasyarat: buyer_token sudah diisi dan keranjang berisi item. Keranjang tidak boleh berisi produk milik profil pembeli sendiri (self_purchase_not_allowed).\nRespons berisi order_id yang diperlukan untuk request selanjutnya."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "pm.test(\"Saves order_id from first order\", function () {",
+                  "  var json = pm.response.json();",
+                  "  if (json.data && json.data.orders && json.data.orders.length > 0) {",
+                  "    var firstOrder = json.data.orders[0];",
+                  "    if (firstOrder && firstOrder.id) {",
+                  "      pm.collectionVariables.set(\"order_id\", firstOrder.id);",
+                  "    }",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Buyer Orders",
+      "item": [
+        {
+          "name": "GET /api/orders - Daftar pesanan pembeli",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Mengembalikan daftar pesanan milik pembeli dengan pagination.\nPrasyarat: buyer_token sudah diisi."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "GET /api/orders/{order_id} - Detail pesanan pembeli",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}"]
+            },
+            "description": "Mengembalikan detail pesanan milik pembeli, termasuk item, pembayaran, dan riwayat status.\nPrasyarat: buyer_token dan order_id sudah diisi (didapat dari response POST /orders/checkout atau GET /orders)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "POST /api/orders/{order_id}/cancel - Batalkan pesanan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Barang tidak tersedia\",\n  \"notes\": \"Pembatalan oleh pembeli\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "cancel"]
+            },
+            "description": "Membatalkan pesanan milik pembeli. Hanya status pending yang dapat dibatalkan. Stok akan dikembalikan.\nPrasyarat: buyer_token dan order_id sudah diisi (pesanan harus berstatus pending dan milik pembeli)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Buyer Payment",
+      "item": [
+        {
+          "name": "GET /api/orders/{order_id}/payment - Info pembayaran",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/payment",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "payment"]
+            },
+            "description": "Mengembalikan informasi pembayaran terbaru pesanan milik pembeli.\nPrasyarat: buyer_token dan order_id sudah diisi."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "PATCH /api/orders/{order_id}/payment - Kirim info pembayaran",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_method\": \"transfer\",\n  \"payment_reference\": \"TRX-20261109-001\",\n  \"paid_at\": \"2026-11-09T10:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/payment",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "payment"]
+            },
+            "description": "Pembeli mengirim informasi pembayaran. Hanya dapat diajukan pada status pesanan pending atau confirmed, dan pembayaran harus masih unpaid.\nPrasyarat: buyer_token dan order_id sudah diisi (pesanan harus berstatus pending atau confirmed)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment Proof",
+      "item": [
+        {
+          "name": "POST /api/orders/{order_id}/payment/proof - Upload bukti",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/payment/proof",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "payment", "proof"]
+            },
+            "description": "Pembeli mengunggah bukti pembayaran (PDF/JPG/JPEG/PNG, maksimal 5 MB). Hanya dapat diunggah saat status pembayaran pending_confirmation dan pesanan belum dibatalkan/selesai.\nPrasyarat: buyer_token dan order_id sudah diisi (pembayaran harus berstatus pending_confirmation). Pilih file bukti pada form-data field 'file' sebelum menjalankan."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "GET /api/orders/{order_id}/payment/proof/download - Unduh bukti (pembeli)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{buyer_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/payment/proof/download",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "payment", "proof", "download"]
+            },
+            "description": "Pembeli mengunduh berkas bukti pembayaran pesanan miliknya.\nPrasyarat: buyer_token dan order_id sudah diisi (bukti pembayaran harus sudah diunggah)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is file download\", function () {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Disposition\")).to.include(\"attachment\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Seller Orders",
+      "item": [
+        {
+          "name": "GET /api/seller/orders - Daftar pesanan penjual",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{seller_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/seller/orders?page=1&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["seller", "orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": false
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Mengembalikan daftar pesanan milik penjual dengan pagination.\nPrasyarat: seller_token sudah diisi."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "GET /api/seller/orders/{order_id} - Detail pesanan penjual",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{seller_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/seller/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["seller", "orders", "{{order_id}}"]
+            },
+            "description": "Mengembalikan detail pesanan milik penjual, termasuk item, pembeli, dan pembayaran.\nPrasyarat: seller_token dan order_id sudah diisi (pesanan harus milik penjual yang login)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "PATCH /api/seller/orders/{order_id}/status - Ubah status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{seller_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\",\n  \"notes\": \"Pesanan diterima, menunggu konfirmasi pembayaran\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/seller/orders/{{order_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["seller", "orders", "{{order_id}}", "status"]
+            },
+            "description": "Penjual mengubah status pesanan. Transisi ke processing membutuhkan pembayaran dengan status paid.\nPrasyarat: seller_token dan order_id sudah diisi (pesanan harus milik penjual yang login).\nTransisi yang diizinkan: pending -> confirmed/cancelled, confirmed -> processing/cancelled, processing -> shipped/cancelled, shipped -> completed."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Seller Payment",
+      "item": [
+        {
+          "name": "POST /api/seller/orders/{order_id}/payment/confirm - Konfirmasi pembayaran",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{seller_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_method\": \"transfer\",\n  \"payment_reference\": \"TRX-20261109-001\",\n  \"paid_at\": \"2026-11-09T10:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/seller/orders/{{order_id}}/payment/confirm",
+              "host": ["{{base_url}}"],
+              "path": ["seller", "orders", "{{order_id}}", "payment", "confirm"]
+            },
+            "description": "Penjual mengonfirmasi pembayaran pesanan. Nominal pembayaran harus sesuai total pesanan. Penjual tidak dapat mengonfirmasi pembayaran untuk pesanan yang ia beli sendiri (self-purchase).\nPrasyarat: seller_token dan order_id sudah diisi (pesanan harus milik penjual, belum dibatalan/selesai, dan pembeli sudah mengajukan pembayaran dengan status pending_confirmation)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});",
+                  "pm.test(\"Response has success true\", function () {",
+                  "  var json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "GET /api/seller/orders/{order_id}/payment/proof/download - Unduh bukti (penjual)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{seller_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/seller/orders/{{order_id}}/payment/proof/download",
+              "host": ["{{base_url}}"],
+              "path": ["seller", "orders", "{{order_id}}", "payment", "proof", "download"]
+            },
+            "description": "Penjual mengunduh berkas bukti pembayaran pesanan yang ia jual.\nPrasyarat: seller_token dan order_id sudah diisi (bukti pembayaran harus sudah diunggah dan pesanan milik penjual)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is file download\", function () {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Disposition\")).to.include(\"attachment\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "buyer_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "seller_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cart_item_id",
+      "value": ""
+    }
+  ]
+}

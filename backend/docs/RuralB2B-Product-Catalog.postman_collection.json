@@ -1,0 +1,271 @@
+{
+  "info": {
+    "name": "RuralB2B Product Catalog API",
+    "description": "Koleksi pengujian Tahap 5: katalog publik, CRUD produk penjual, inventori, dan gambar produk. Login Business menyimpan access_token. Create Product menyimpan product_id. Upload Image menyimpan image_id. Untuk upload, pilih file pada form-data field 'file'.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://127.0.0.1:5000"},
+    {"key": "access_token", "value": ""},
+    {"key": "product_id", "value": ""},
+    {"key": "image_id", "value": ""},
+    {"key": "category_id", "value": "null"}
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/health"
+      }
+    },
+    {
+      "name": "Login Business",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (body && body.data && body.data.access_token) {",
+              "  pm.collectionVariables.set('access_token', body.data.access_token);",
+              "  console.log('access_token tersimpan');",
+              "}",
+              "pm.test('login 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"budi.umkm@example.com\",\n  \"password\": \"RuralB2B!2026\"\n}"
+        },
+        "url": "{{base_url}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Public Categories",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (body && body.data && body.data.items && body.data.items.length > 0) {",
+              "  pm.collectionVariables.set('category_id', String(body.data.items[0].id));",
+              "  console.log('category_id tersimpan:', body.data.items[0].id);",
+              "}",
+              "pm.test('categories 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/categories"
+      }
+    },
+    {
+      "name": "Create Product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (body && body.data && body.data.product) {",
+              "  pm.collectionVariables.set('product_id', String(body.data.product.id));",
+              "  console.log('product_id tersimpan:', body.data.product.id);",
+              "}",
+              "pm.test('create 201', () => pm.response.to.have.status(201));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"product_name\": \"Tomat Merah\",\n  \"description\": \"Tomat segar dari petani\",\n  \"category_id\": {{category_id}},\n  \"price\": 12000,\n  \"unit\": \"kg\",\n  \"minimum_order\": 2,\n  \"product_status\": \"active\",\n  \"stock_quantity\": 100\n}"
+        },
+        "url": "{{base_url}}/api/products"
+      }
+    },
+    {
+      "name": "Public List Products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/products?q=tomat&in_stock=true&sort=price_asc&page=1&per_page=20"
+      }
+    },
+    {
+      "name": "Public Product Detail",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/products/{{product_id}}"
+      }
+    },
+    {
+      "name": "Business Product List",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/api/business/products?page=1&per_page=20"
+      }
+    },
+    {
+      "name": "Get Business Product",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/api/business/products/{{product_id}}"
+      }
+    },
+    {
+      "name": "PUT Product",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"product_name\": \"Tomat Merah Super\",\n  \"description\": \"Tomat segar pilihan\",\n  \"category_id\": {{category_id}},\n  \"price\": 13000,\n  \"unit\": \"kg\",\n  \"minimum_order\": 3,\n  \"product_status\": \"active\"\n}"
+        },
+        "url": "{{base_url}}/api/products/{{product_id}}"
+      }
+    },
+    {
+      "name": "PATCH Product",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"product_status\": \"inactive\"\n}"
+        },
+        "url": "{{base_url}}/api/products/{{product_id}}"
+      }
+    },
+    {
+      "name": "Get Inventory",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/api/business/inventory?page=1&per_page=20"
+      }
+    },
+    {
+      "name": "PATCH Inventory Set",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"stock_quantity\": 50\n}"
+        },
+        "url": "{{base_url}}/api/business/inventory/{{product_id}}"
+      }
+    },
+    {
+      "name": "PATCH Inventory Adjust",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"adjustment\": -5\n}"
+        },
+        "url": "{{base_url}}/api/business/inventory/{{product_id}}"
+      }
+    },
+    {
+      "name": "Upload Product Image",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (body && body.data && body.data.image) {",
+              "  pm.collectionVariables.set('image_id', String(body.data.image.id));",
+              "  console.log('image_id tersimpan:', body.data.image.id);",
+              "}",
+              "pm.test('upload 201', () => pm.response.to.have.status(201));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "file", "type": "file", "src": "C:/path/to/product.png"},
+            {"key": "is_primary", "type": "text", "value": "true"}
+          ]
+        },
+        "url": "{{base_url}}/api/products/{{product_id}}/images"
+      }
+    },
+    {
+      "name": "Public Image File",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/products/{{product_id}}/images/{{image_id}}/file"
+      }
+    },
+    {
+      "name": "Business Image File",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/api/business/products/{{product_id}}/images/{{image_id}}/file"
+      }
+    },
+    {
+      "name": "Delete Product Image",
+      "request": {
+        "method": "DELETE",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/api/products/{{product_id}}/images/{{image_id}}"
+      }
+    },
+    {
+      "name": "Delete Product",
+      "request": {
+        "method": "DELETE",
+        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+        "url": "{{base_url}}/api/products/{{product_id}}"
+      }
+    }
+  ]
+}
+

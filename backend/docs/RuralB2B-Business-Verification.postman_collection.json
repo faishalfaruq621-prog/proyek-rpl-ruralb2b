@@ -1,0 +1,570 @@
+{
+  "info": {
+    "name": "RuralB2B Business Verification API",
+    "description": "Koleksi pengujian profil bisnis dan verifikasi UMKM. Login Business/Admin akan menyimpan token. Submit Verification menyimpan verification_id. Upload Document menyimpan document_id. Untuk upload, pilih file pada form-data field 'file'.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:5000"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "verification_id",
+      "value": ""
+    },
+    {
+      "key": "document_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Login Business",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (body && body.data && body.data.access_token) {",
+              "    pm.collectionVariables.set('access_token', body.data.access_token);",
+              "    console.log('access_token tersimpan');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"budi.umkm@example.com\",\n  \"password\": \"RuralB2B!2026\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Login Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (body && body.data && body.data.access_token) {",
+              "    pm.collectionVariables.set('admin_token', body.data.access_token);",
+              "    console.log('admin_token tersimpan');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"AdminPass!2026\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get My Profile",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/business/profile",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "business",
+            "profile"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Profile (PATCH)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"+62 812-3456-7890\",\n  \"address\": \"Jl. Raya Desa No. 1\",\n  \"village\": \"Sukamaju\",\n  \"district\": \"Cibiru\",\n  \"city\": \"Bandung\",\n  \"province\": \"Jawa Barat\",\n  \"postal_code\": \"40615\",\n  \"latitude\": -6.914744,\n  \"longitude\": 107.60981,\n  \"description\": \"Petani sayuran organik\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/business/profile",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "business",
+            "profile"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Submit Verification",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (body && body.data && body.data.verification) {",
+              "    pm.collectionVariables.set('verification_id', body.data.verification.id);",
+              "    console.log('verification_id tersimpan');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/business/verifications",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "business",
+            "verifications"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Upload Document",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (body && body.data && body.data.document) {",
+              "    pm.collectionVariables.set('document_id', body.data.document.id);",
+              "    console.log('document_id tersimpan');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "document_type",
+              "value": "ktp",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/business/verifications/{{verification_id}}/documents",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "business",
+            "verifications",
+            "{{verification_id}}",
+            "documents"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get My Verifications",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (body && body.data && body.data.items && body.data.items.length) {",
+              "    pm.collectionVariables.set('verification_id', body.data.items[0].id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/business/verifications?page=1&per_page=20",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "business",
+            "verifications"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "per_page",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Verification Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/business/verifications/{{verification_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "business",
+            "verifications",
+            "{{verification_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Download Document",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/business/verifications/{{verification_id}}/documents/{{document_id}}/download",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "business",
+            "verifications",
+            "{{verification_id}}",
+            "documents",
+            "{{document_id}}",
+            "download"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin List Verifications",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "if (body && body.data && body.data.items && body.data.items.length) {",
+              "    pm.collectionVariables.set('verification_id', body.data.items[0].id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/admin/verifications?status=pending&page=1&per_page=20",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "verifications"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "pending"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "per_page",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin Verification Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/admin/verifications/{{verification_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "verifications",
+            "{{verification_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin Approve",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"notes\": \"Dokumen sesuai.\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/admin/verifications/{{verification_id}}/approve",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "verifications",
+            "{{verification_id}}",
+            "approve"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin Reject",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"rejection_reason\": \"Dokumen KTP tidak terbaca.\",\n  \"notes\": \"Silakan unggah ulang.\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/admin/verifications/{{verification_id}}/reject",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "verifications",
+            "{{verification_id}}",
+            "reject"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin Logs",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/admin/verifications/{{verification_id}}/logs",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "verifications",
+            "{{verification_id}}",
+            "logs"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Admin Download Document",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/admin/verifications/{{verification_id}}/documents/{{document_id}}/download",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "verifications",
+            "{{verification_id}}",
+            "documents",
+            "{{document_id}}",
+            "download"
+          ]
+        }
+      }
+    }
+  ]
+}
